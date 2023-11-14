@@ -13,10 +13,16 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 class GroupService
 {
     public function create_group_service($Data){
+        $isexist=Group::where('name',$Data['name'])->first();
+        if($isexist){
+            $group='This group name has been taken, please change it';
+        }
+        else {
         $group = new Group();
         $group->name=$Data['name'];
         $group->owner_id=auth()->id();
         $group->save();
+        }
         return $group;
     }
     public function add_file_to_group_service($Data){
@@ -28,13 +34,17 @@ class GroupService
 
         $file = $Data['file'];
         $file_name=$Data['name'] . '.'. $file->getClientOriginalExtension();
-        $file->move(public_path("uploads/Group_files/"),$file_name);
-        $path = "public/uploads/Group_files/" . $file_name;
+        $file->move(public_path("uploads/Group_files/$group->name/"),$file_name);
+        $path = "public/uploads/Group_files/$group->name/" . $file_name;
 
-        $isexist=File::where('name', $file_name)->first();
+        $isexist = File::where([
+            ['name', $file_name],
+            ['group_id', $Data['group_id']],
+        ])->first();
+
 
             if ($isexist){
-                $file_group = "نعتذر هذا الاسم للملف قد تم استخدامه";
+                $file_group = "This file name has been taken in this group, please change it";
             }
             else {
             $file_group = new File();
@@ -47,7 +57,7 @@ class GroupService
             }
         }
         else {
-            $file_group='نعتذر لا يحق لك اضافة ملف';
+            $file_group='Sorry, you can not add file';
         }
         return $file_group;
     }
@@ -63,18 +73,18 @@ class GroupService
                 $user_id=auth()->id();
                 if ($owner_group==$user_id){
                 $file->delete();
-                $response = "تم حذف الملف بنجاح ";
+                $response = "The file has been deleted successfully";
                 }
                 else {
-                    $response = "لا يحق لك حذف هذا الملف ";
+                    $response = "You do not have the right to delete this file";
                 }
             }
             else {
-                $response = "هذا الملف محجوز";
+                $response = "This file is reserved";
             }
 
         }
-        else $response = "هذا الملف غير موجود";
+        else $response = "This file does not exist";
 
         return $response;
     }
@@ -89,7 +99,7 @@ class GroupService
         $user_id=auth()->id();
             if ($owner_group==$user_id){
                 if ($isexist){
-                    $user_group="هذا المستخدم موجود بالفعل";
+                    $user_group="This user already exists";
                 }
                 else {
                 $user_group=new User_Group();
@@ -99,11 +109,11 @@ class GroupService
                 }
             }
             else {
-                $user_group = "لا يحق لك اضافة مستخدم ";
+                $user_group = "You do not have the right to add a user";
             }
         }
         else {
-            $user_group = "فشلت العملية لعدم وجود هذا القروب او المستخدم";
+            $user_group = "The operation failed because this group or user does not exist";
         }
 
         return $user_group;
@@ -125,23 +135,23 @@ class GroupService
             if ($owner_group==$user_id){
                 if ($user_group){
                     if ($file_reseved){
-                        $user_group="هذا المستخدم قد حجز ملف ، لا تستطيع حذفه";
+                        $user_group="This user has reserved a file, which you cannot delete";
                     }
                     else {
                         $user_group->delete();
-                        $user_group="تم حذف المستخدم بنجاح";
+                        $user_group="The user has been deleted successfully";
                     }
                 }
                 else {
-                    $user_group = "هذا المستخدم غير موجود في هذا القروب";
+                    $user_group = "This user does not exist in this group";
                 }
             }
             else {
-                $user_group = "لا يحق لك حذف هذا المستخدم ";
+                $user_group = "You do not have the right to delete this user";
             }
         }
         else {
-            $user_group = "فشلت العملية لعدم وجود هذا القروب او المستخدم";
+            $user_group = "The operation failed because this group or user does not exist";
         }
 
         return $user_group;
@@ -161,7 +171,7 @@ class GroupService
             }
         }
         else {
-            $allUsers = 'لا يوجد مستخدمين في هذه المجموعة';
+            $allUsers = 'There are no users in this group';
         }
         return $allUsers;
     }
@@ -180,6 +190,12 @@ class GroupService
                     $allUsers[] = $users;
                 }
             }
+            foreach ($group_files as $file){
+                if ($file->status=="reserved"){
+                    $user_file = User::where('id', $file->user_file_id)->first();
+                    $file['used_from']=$user_file->user_name;
+                }
+            }
         }
         $response=[
             'Group_info'=>$group_info,
@@ -190,22 +206,71 @@ class GroupService
     }
     public function list_created_groups_service($Data){
         $groups=Group::where('owner_id',$Data)->get();
+        foreach($groups as $group){
+            $group['file_count']=count(File::where('group_id',$group->id)->get());
+        }
         return $groups;
     }
     public function list_joined_groups_service($Data){
         $groups=User_Group::where('user_id',$Data)->get();
         return $groups;
     }
-    public function read_file_service($Data){
+    public function read_file_from_group_service($Data){
         $file=File::where('id',$Data)->first();
+        $group=Group::where('id',$file->group_id)->first();
         if ($file->status=='free'){
-            $path = public_path() . "/uploads/Group_files/" . $file->name;
+            $path = public_path() . "/uploads/Group_files/$group->name/" . $file->name;
             $content = file_get_contents($path);
             $cleanString = mb_convert_encoding($content, 'UTF-8', 'UTF-8');
         }
         else {
-            $cleanString='نعتذر هذا الملف محجوز ، لاتستطيع قراءته';
+            $cleanString='Sorry, this file is reserved, you cannot read it';
         }
         return $cleanString;
     }
+    public function check_in_group_file_service($Data)
+    {
+        $my_file = File::where('id', $Data)->first();
+        $group=Group::where('id',$my_file->group_id)->first();
+        $user_id=auth()->id();
+        $user_info = User::where('id',$user_id)->first();
+
+        if ($user_info->number_of_files < 10 && $my_file->status=="free"){
+            $my_file->status="reserved";
+            $my_file->user_file_id=$user_id;
+            $my_file->save();
+
+            $user_info->number_of_files=($user_info->number_of_files)+1;
+            $user_info->save();
+            // download file
+           $file = public_path() . "/uploads/Group_files/$group->name/" . $my_file->name;
+           $response = new BinaryFileResponse($file);
+           $response->setContentDisposition(
+             ResponseHeaderBag::DISPOSITION_INLINE // أو استخدم DISPOSITION_ATTACHMENT إذا كنت ترغب في التنزيل
+            );
+        }
+        else {
+            $response="Sorry, this file is reserved, and you cannot reserve it";
+        }
+        return $response;
+    }
+    public function check_out_group_file($Data)
+    {
+        $file = $Data['file'];
+        $file_name = $file->getClientOriginalName();
+        $orginal_file=file::where('id',$Data['file_id'])->first();
+        $group=Group::where('id',$orginal_file->group_id)->first();
+
+        if ($orginal_file['name']==$file_name){
+            $destinationPath = public_path() . "/uploads/Group_files/$group->name/";
+            $file->move($destinationPath, $file_name);
+             $orginal_file->status='free';
+             $orginal_file->user_file_id=null;
+             $orginal_file->save();
+        }
+        else {
+            $orginal_file='Sorry, this file is different from the one that was reserved';
+        }
+        return $orginal_file;
+}
 }

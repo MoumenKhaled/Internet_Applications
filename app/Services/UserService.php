@@ -3,6 +3,10 @@
 namespace App\Services;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use App\Mail\RegisterUserMail;
+use Illuminate\Support\Facades\Mail;
+
 class UserService
 {
     public function registerUser($userData)
@@ -21,15 +25,32 @@ class UserService
         $user->user_name = $userData['user_name'];
         $user->email =  $userData['email'];
         $user->password = Hash::make($userData['password']); // تشفير كلمة المرور
+        $user->verification_code = rand(100000, 999999);
         $user->save();
+        //send email to verifiy
+
+       // Send verification email
+        Mail::to($user->email)->send(new RegisterUserMail($user,$user->verification_code));
         // You can perform additional business logic here if needed
         $token = $user->createToken('apiToken')->plainTextToken;
         $user=[
             'user' => $user,
-            'token' => $token 
+            'token' => $token
         ];
         }
         return $user ;
+    }
+    public function activate_email_service($userData)
+    {
+        $user = User::where('verification_code', $userData['code'])->first();
+        if ($user) {
+            $user->email_verified_at = now();
+            $user->save();
+            $response='The account has been activated successfully';
+        } else {
+                $response= 'Error in the entered code, please try again';
+        }
+        return $response;
     }
     public function loginUser($userData)
     {
@@ -41,8 +62,8 @@ class UserService
                 'token' => $token
              ];
         }
-        else if (!$user) $user="this account doesn't exist";
-        else   $user= "invaild password";
+        else if (!$user) $user="This account doesn't exist";
+        else   $user= "The password is incorrect";
 
         return $user;
     }

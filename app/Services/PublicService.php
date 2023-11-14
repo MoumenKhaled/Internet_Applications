@@ -33,7 +33,7 @@ class PublicService
 
         $isexist= $email=Public_file::where('name', $file_name)->first();
         if ($isexist){
-            $publicfile = "This name of file name has already been taken,please change it";
+            $publicfile = "This name of file has already been taken,please change it";
         }
         else {
             $publicfile=new Public_file();
@@ -87,7 +87,7 @@ class PublicService
             // ];
         }
         else {
-            $response="نعتذر لا تستطيع حجز الملف";
+            $response="Sorry, you cannot reserve this file";
         }
         return $response;
     }
@@ -111,7 +111,7 @@ class PublicService
              $orginal_file->save();
         }
         else {
-            $orginal_file='نعتذر، هذا الملف مختلف عن الملف الذي تم حجزه';
+            $orginal_file='Sorry, this file is different from the one that was reserved';
         }
         return $orginal_file;
 }

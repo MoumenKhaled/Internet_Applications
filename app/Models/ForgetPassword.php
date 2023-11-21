@@ -5,8 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Log extends Model
+class ForgetPassword extends Model
 {
-    protected $fillable = ['request', 'response'];
+    protected $fillable = ['email', 'token'];
     use HasFactory;
 }

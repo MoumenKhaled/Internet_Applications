@@ -1,5 +1,5 @@
 {
-    
+
     "name": "laravel/laravel",
     "type": "project",
     "description": "The Laravel Framework.",
@@ -12,7 +12,8 @@
         "laravel/framework": "^9.19",
         "laravel/sanctum": "^3.0",
         "laravel/tinker": "^2.7",
-        "phpoffice/phpword": "^1.1"
+        "phpoffice/phpword": "^1.1",
+        "ray/aop": "^2.14"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
@@ -30,7 +31,7 @@
             "Database\\Seeders\\": "database/seeders/"
         }
     },
-    
+
     "autoload-dev": {
         "psr-4": {
             "Tests\\": "tests/"

@@ -40,20 +40,28 @@ class PublicController extends Controller
     public function check_in_public_file(Request $request,$file_id){
         $response = $this->publicservice->check_in_public_file_service($file_id);
        return response($response);
-   }
-   public function check_in_list_public_files(Request $request){
+    }
+    public function check_in_list_public_files(Request $request){
     $file_IDs=$request->validate([
         'IDs'=>'required',
     ]);
-   $response = $this->publicservice->check_in_public_list_files_service($file_IDs);
-   return response($response);
-}
-   public function check_out_public_file(Request $request){
+    $response = $this->publicservice->check_in_public_list_files_service($file_IDs);
+    return response($response);
+    }
+    public function check_out_public_file(Request $request){
     $file=$request->validate([
         'file_id'=>'required',
         'file'=>'required',
     ]);
     $response = $this->publicservice->check_out_public_file($file);
     return response($response);
-}
+    }
+    public function read_file_from_public(Request $request,$file_id){
+    $response = $this->publicservice->read_file_from_public_service($file_id);
+    return response($response);
+    }
+    public function delete_file_from_public(Request $request,$file_id){
+    $response = $this->publicservice->delete_file_from_public_service($file_id);
+    return response($response);
+    }
 }

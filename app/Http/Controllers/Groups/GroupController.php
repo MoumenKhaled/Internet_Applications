@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\GroupService;
 use App\Models\User;
+
 class GroupController extends Controller
 {
     protected $groupservice;
@@ -25,31 +26,31 @@ class GroupController extends Controller
         $file_group=$request->validate([
             'name'=>'required',
             'file'=>'required',
-            'group_id'=>'required',
+            'group_name'=>'required',
         ]);
         $response = $this->groupservice->add_file_to_group_service($file_group);
         return response($response);
     }
     public function delete_file_from_group(Request $request){
         $file_group=$request->validate([
-            'file_id'=>'required',
-            'group_id'=>'required'
+            'file_name'=>'required',
+            'group_name'=>'required'
         ]);
         $response = $this->groupservice->delete_file_from_group_service($file_group);
         return response($response);
     }
     public function add_user_to_group(Request $request){
         $Data=$request->validate([
-            'user_id'=>'required',
-            'group_id'=>'required'
+            'user_name'=>'required',
+            'group_name'=>'required'
         ]);
         $response = $this->groupservice->add_user_to_group_service($Data);
         return response($response);
     }
     public function delete_user_from_group(Request $request){
         $Data=$request->validate([
-            'user_id'=>'required',
-            'group_id'=>'required'
+            'user_name'=>'required',
+            'group_name'=>'required'
         ]);
         $response = $this->groupservice->delete_user_from_group_service($Data);
         return response($response);
@@ -92,4 +93,9 @@ class GroupController extends Controller
     $response = $this->groupservice->check_out_group_file($file);
     return response($response);
 }
+    public function my_reserved_file(Request $request){
+    $user_id=auth()->id();
+    $response = $this->groupservice->my_reserved_file_service($user_id);
+    return response($response);
+    }
 }

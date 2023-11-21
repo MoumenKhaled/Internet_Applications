@@ -3,8 +3,11 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Go\Core\AspectKernel;
-use Go\Core\AspectContainer;
+use App\Aspect\LoggingAspect;
+use Ray\Aop\Bind;
+use Ray\Aop\Compiler;
+use App\Http\Controllers\Auth\AuthController;
+use App\Services\UserService;
 use Go\Aop\Framework\ClassProxy;
 
 class AppServiceProvider extends ServiceProvider
@@ -16,19 +19,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->singleton(AspectContainer::class, function ($app) {
-            $aspectKernel = $app->make(AspectKernel::class);
-            $aspectKernel->init([
-                'debug' => config('app.debug'),
-                'appDir' => base_path(),
-                'cacheDir' => storage_path('app/aop'),
-                'includePaths' => [base_path('app')],
-                'excludePaths' => [base_path('vendor')],
-                'aspects' => [
-                    \App\Aspects\LogRequestsAndResponses::class,
-                ],
-            ]);
-            return $aspectKernel->getContainer();
+        $this->app->singleton(LoggingAspect::class);
+
+        // Bind aspect to your API controller methods
+        $this->app->bind(AuthController::class, function ($app) {
+            $compiler = new Compiler(storage_path('app/aop'));
+            $bind = (new Bind)->bindInterceptors('register', [$app->make(LoggingAspect::class)]);
+
+            // Ensure that UserService is injected into AuthController
+            $userService = $app->make(UserService::class);
+
+            return $compiler->newInstance(AuthController::class, [$userService], $bind);
+
+
         });
     }
 

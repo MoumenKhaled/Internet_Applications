@@ -13,10 +13,10 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('logs', function (Blueprint $table) {
+        Schema::create('forget_passwords', function (Blueprint $table) {
             $table->id();
-            $table->text('request')->default('null');
-            $table->text('response')->default('null');
+            $table->string('email');
+            $table->string('token');
             $table->timestamps();
         });
     }
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('logs');
+        Schema::dropIfExists('forget_passwords');
     }
 };
